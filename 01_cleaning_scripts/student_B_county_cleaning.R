@@ -27,14 +27,14 @@ glimpse(prop_raw)
 # -----------------------------------------------------------------------------
 # 2. Filter to California only
 # -----------------------------------------------------------------------------
+#Step 2 — Filter to California, keep only observed rows:
+  
+  ca_prop <- prop_raw %>%
+  filter(state == "California") %>%
+  filter(type == "observed")
 
-ca_prop <- prop_raw %>%
-  filter(state == "California")
-
-nrow(ca_prop)
-n_distinct(ca_prop$county)
-
-
+nrow(ca_prop)           # 123 rows
+n_distinct(ca_prop$county)  # 16 counties
 # -----------------------------------------------------------------------------
 # 3. Keep only observed rows
 # -----------------------------------------------------------------------------
@@ -42,21 +42,31 @@ n_distinct(ca_prop$county)
 # The "type" column is either "observed" (actual court records)
 # or "imputed" (modeled estimates). We keep only observed.
 
-ca_prop %>% count(type)
-
-ca_prop <- ca_prop %>%
-  filter(type == "observed")
-
-
+#Step 3 — Clean names and FIPS:
+  
+  ca_prop <- ca_prop %>%
+  mutate(
+    county = str_remove(county, " County"),
+    geoid  = str_pad(as.character(cofips), width = 5, pad = "0")
+  )
 # -----------------------------------------------------------------------------
 # 4. Clean county names
 # -----------------------------------------------------------------------------
 
-ca_prop <- ca_prop %>%
-  mutate(county = str_remove(county, " County"))
+#Step 4 — Select and rename columns:
+  
+  # Rename filing_rate → filing_rate_prop to avoid clash when merging with Student A
+  ca_prop_clean <- ca_prop %>%
+  select(
+    geoid,
+    county,
+    year,
+    filing_rate_prop = filing_rate,
+    threatened_rate,
+    judgement_rate
+  )
 
-unique(ca_prop$county)
-
+glimpse(ca_prop_clean)
 
 # -----------------------------------------------------------------------------
 # 5. Fix the FIPS code
